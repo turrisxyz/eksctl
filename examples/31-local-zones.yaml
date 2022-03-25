@@ -1,0 +1,15 @@
+# An example of ClusterConfig object with a VPC and an unmanaged nodegroup in local zones:
+---
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: cluster-2
+  region: us-west-2
+  version: "1.21"
+
+localZones: ["us-west-2-lax-1"]
+
+nodeGroups:
+  - name: mng-1
+    localZones: ["us-west-2-lax-1"]

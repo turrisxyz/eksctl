@@ -228,6 +228,98 @@ var _ = Describe("AZ", func() {
 	})
 })
 
+var _ = Describe("Setting Local Zone(s)", func() {
+	var (
+		p            *mockprovider.MockProvider
+		cfg          *api.ClusterConfig
+		region       string
+		zone1, zone2 = "us-west-2-lax-1", "us-west-2-lax-2"
+	)
+
+	BeforeEach(func() {
+		cfg = api.NewClusterConfig()
+		p = mockprovider.NewMockProvider()
+	})
+
+	When("a local zones is set", func() {
+		When("the local zone(s) is valid", func() {
+			It("sets it as another zone to be used for VPC creation", func() {
+				region = "us-west-2"
+				p.MockEC2().On("DescribeAvailabilityZones", &ec2.DescribeAvailabilityZonesInput{
+					ZoneNames: []*string{&zone1, &zone2},
+					Filters: []*ec2.Filter{{
+						Name:   aws.String("region-name"),
+						Values: []*string{aws.String(region)},
+					}, {
+						Name:   aws.String("zone-type"),
+						Values: []*string{aws.String("local-zone")},
+					}, {
+						Name:   aws.String("state"),
+						Values: []*string{aws.String("available")},
+					}},
+				}).
+					Return(&ec2.DescribeAvailabilityZonesOutput{}, nil)
+				cfg.LocalZones = []string{zone1, zone2}
+				err := az.SetLocalZones(cfg, p.EC2(), region)
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
+		When("the local zone(s) is not valid", func() {
+			It("returns an error", func() {
+				region = "us-west-2"
+				p.MockEC2().On("DescribeAvailabilityZones", &ec2.DescribeAvailabilityZonesInput{
+					ZoneNames: []*string{&zone1, &zone2},
+					Filters: []*ec2.Filter{{
+						Name:   aws.String("region-name"),
+						Values: []*string{aws.String(region)},
+					}, {
+						Name:   aws.String("zone-type"),
+						Values: []*string{aws.String("local-zone")},
+					}, {
+						Name:   aws.String("state"),
+						Values: []*string{aws.String("available")},
+					}},
+				}).
+					Return(nil, fmt.Errorf("err"))
+				cfg.LocalZones = []string{zone1, zone2}
+				err := az.SetLocalZones(cfg, p.EC2(), region)
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError("error validating local zone(s) [us-west-2-lax-1 us-west-2-lax-2]: err"))
+			})
+		})
+
+		When("the local zone is in a zone that should be avoided", func() {
+			It("returns an error", func() {
+				zoneToAvoid := "cnn1-az4"
+				p.MockEC2().On("DescribeAvailabilityZones", &ec2.DescribeAvailabilityZonesInput{
+					ZoneNames: []*string{&zoneToAvoid},
+					Filters: []*ec2.Filter{{
+						Name:   aws.String("region-name"),
+						Values: []*string{aws.String(api.RegionCNNorth1)},
+					}, {
+						Name:   aws.String("zone-type"),
+						Values: []*string{aws.String("local-zone")},
+					}, {
+						Name:   aws.String("state"),
+						Values: []*string{aws.String("available")},
+					}},
+				}).
+					Return(&ec2.DescribeAvailabilityZonesOutput{
+						AvailabilityZones: []*ec2.AvailabilityZone{{
+							ZoneId:   &zoneToAvoid,
+							ZoneName: &zoneToAvoid,
+						}},
+					}, nil)
+				cfg.LocalZones = []string{zoneToAvoid}
+				err := az.SetLocalZones(cfg, p.EC2(), api.RegionCNNorth1)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cfg.LocalZones).To(HaveLen(0))
+			})
+		})
+	})
+})
+
 func zonesAreUnique(zones []string) bool {
 	mapZones := make(map[string]interface{})
 	for _, z := range zones {

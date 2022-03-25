@@ -1,5 +1,5 @@
-//go:build integration
-// +build integration
+//// go:build integration
+//// +build integration
 
 package crud
 
@@ -229,7 +229,7 @@ var _ = Describe("(Integration) Create, Get, Scale & Delete", func() {
 			})
 		})
 
-		Context("and create a new nodegroup with taints and maxPods", func() {
+		Context("and create a new nodegroup with taints and maxPods in a local zone ", func() {
 			It("should have taints and maxPods set", func() {
 				By("creating a new nodegroup with taints and maxPods set")
 				cmd := params.EksctlCreateCmd.
@@ -283,7 +283,14 @@ var _ = Describe("(Integration) Create, Get, Scale & Delete", func() {
 					maxPods, _ := node.Status.Allocatable.Pods().AsInt64()
 					Expect(maxPods).To(Equal(int64(expectedMaxPods)))
 				}
+				By("asserting that the VPC was created in the local zone")
+				// expectedRegion := "us-west-2-lax-1"
+				// for _, node := range nodeListN1.Items {
+				// 	maxPods, _ := node.
+				// 	Expect(maxPods).To(Equal(string(expectedRegion)))
+				// }
 
+				By("asserting that the nodegroup was created in the local zone")
 			})
 		})
 

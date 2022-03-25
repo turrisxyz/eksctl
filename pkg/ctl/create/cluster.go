@@ -22,6 +22,7 @@ import (
 	karpenteractions "github.com/weaveworks/eksctl/pkg/actions/karpenter"
 	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
 	"github.com/weaveworks/eksctl/pkg/authconfigmap"
+	"github.com/weaveworks/eksctl/pkg/az"
 	"github.com/weaveworks/eksctl/pkg/cfn/manager"
 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils/filter"
@@ -430,6 +431,10 @@ func createOrImportVPC(cmd *cmdutils.Cmd, cfg *api.ClusterConfig, params *cmduti
 
 	subnetsGiven := cfg.HasAnySubnets() // this will be false when neither flags nor config has any subnets
 	if !subnetsGiven && params.KopsClusterNameForVPC == "" {
+		if err := az.SetLocalZones(cfg, ctl.Provider.EC2(), ctl.Provider.Region()); err != nil {
+			return err
+		}
+
 		if err := eks.SetAvailabilityZones(cfg, params.AvailabilityZones, ctl.Provider.EC2(), ctl.Provider.Region()); err != nil {
 			return err
 		}
@@ -442,7 +447,9 @@ func createOrImportVPC(cmd *cmdutils.Cmd, cfg *api.ClusterConfig, params *cmduti
 			return nil
 		}
 
-		return vpc.SetSubnets(cfg.VPC, cfg.AvailabilityZones)
+		zones := append(cfg.AvailabilityZones, cfg.LocalZones...)
+
+		return vpc.SetSubnets(cfg.VPC, zones)
 	}
 
 	if params.KopsClusterNameForVPC != "" {

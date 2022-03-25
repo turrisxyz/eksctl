@@ -5,6 +5,8 @@ kind: ClusterConfig
 metadata:
   name: <generated>
 
+localZones: ["us-west-2-lax-1"]
+
 nodeGroups:
 - name: unm-1
   taints:

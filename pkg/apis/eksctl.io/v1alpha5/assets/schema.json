@@ -204,6 +204,12 @@
         "kubernetesNetworkConfig": {
           "$ref": "#/definitions/KubernetesNetworkConfig"
         },
+        "localZones": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "managedNodeGroups": {
           "items": {
             "$ref": "#/definitions/ManagedNodeGroup"
@@ -249,6 +255,7 @@
         "managedNodeGroups",
         "fargateProfiles",
         "availabilityZones",
+        "localZones",
         "cloudWatch",
         "secretsEncryption",
         "gitops",

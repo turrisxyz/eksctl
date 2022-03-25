@@ -37,7 +37,7 @@ func SetSubnets(vpc *api.ClusterVPC, availabilityZones []string) error {
 	if prefix < 16 || prefix > 24 {
 		return errors.New("VPC CIDR prefix must be between /16 and /24")
 	}
-	zonesTotal := len(availabilityZones)
+	zonesTotal := len(zones)
 
 	var zoneCIDRs []*net.IPNet
 

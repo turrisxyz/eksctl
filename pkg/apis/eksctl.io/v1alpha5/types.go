@@ -735,6 +735,9 @@ type ClusterConfig struct {
 	// +optional
 	AvailabilityZones []string `json:"availabilityZones,omitempty"`
 
+	// +optional
+	LocalZones []string `json:"localZones,omitempty"`
+
 	// See [CloudWatch support](/usage/cloudwatch-cluster-logging/)
 	// +optional
 	CloudWatch *ClusterCloudWatch `json:"cloudWatch,omitempty"`
