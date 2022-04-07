@@ -16,12 +16,12 @@ type endpointAccessCase struct {
 }
 
 type subnetCase struct {
-	subnets  AZSubnetMapping
+	subnets  ZoneSubnetMapping
 	az       string
 	subnetID string
 	cidr     string
 	err      bool
-	expected AZSubnetMapping
+	expected ZoneSubnetMapping
 }
 
 var _ = Describe("VPC Configuration", func() {
@@ -36,11 +36,11 @@ var _ = Describe("VPC Configuration", func() {
 			}
 		},
 		Entry("No subnets", subnetCase{
-			subnets:  NewAZSubnetMapping(),
+			subnets:  NewZoneSubnetMapping(),
 			az:       "us-east-1a",
 			subnetID: "subnet-1",
 			cidr:     "192.168.0.0/16",
-			expected: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			expected: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"us-east-1a": {
 					AZ:   "us-east-1a",
 					ID:   "subnet-1",
@@ -49,13 +49,13 @@ var _ = Describe("VPC Configuration", func() {
 			}),
 		}),
 		Entry("Existing subnets", subnetCase{
-			subnets: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			subnets: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"us-east-1a": {},
 			}),
 			az:       "us-east-1a",
 			subnetID: "subnet-1",
 			cidr:     "192.168.0.0/16",
-			expected: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			expected: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"us-east-1a": {
 					AZ:   "us-east-1a",
 					ID:   "subnet-1",
@@ -64,7 +64,7 @@ var _ = Describe("VPC Configuration", func() {
 			}),
 		}),
 		Entry("Existing subnet with ID", subnetCase{
-			subnets: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			subnets: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"us-east-1a": {
 					ID: "subnet-1",
 				},
@@ -72,7 +72,7 @@ var _ = Describe("VPC Configuration", func() {
 			az:       "us-east-1a",
 			subnetID: "subnet-1",
 			cidr:     "192.168.0.0/16",
-			expected: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			expected: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"us-east-1a": {
 					AZ:   "us-east-1a",
 					ID:   "subnet-1",
@@ -81,7 +81,7 @@ var _ = Describe("VPC Configuration", func() {
 			}),
 		}),
 		Entry("ID only subnet", subnetCase{
-			subnets: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			subnets: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"main-subnet": {
 					ID: "subnet-1",
 				},
@@ -89,7 +89,7 @@ var _ = Describe("VPC Configuration", func() {
 			az:       "us-east-1a",
 			subnetID: "subnet-1",
 			cidr:     "192.168.0.0/24",
-			expected: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			expected: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"main-subnet": {
 					AZ:   "us-east-1a",
 					ID:   "subnet-1",
@@ -98,7 +98,7 @@ var _ = Describe("VPC Configuration", func() {
 			}),
 		}),
 		Entry("Conflicting existing subnets", subnetCase{
-			subnets: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			subnets: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"us-east-1a": {
 					ID: "subnet-2",
 				},
@@ -109,7 +109,7 @@ var _ = Describe("VPC Configuration", func() {
 			err:      true,
 		}),
 		Entry("Named subnets placeholder", subnetCase{
-			subnets: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			subnets: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"main-subnet": {
 					AZ: "us-east-1a",
 				},
@@ -117,7 +117,7 @@ var _ = Describe("VPC Configuration", func() {
 			az:       "us-east-1a",
 			subnetID: "subnet-1",
 			cidr:     "192.168.0.0/16",
-			expected: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			expected: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"main-subnet": {
 					AZ:   "us-east-1a",
 					ID:   "subnet-1",
@@ -126,7 +126,7 @@ var _ = Describe("VPC Configuration", func() {
 			}),
 		}),
 		Entry("Ambiguous list", subnetCase{
-			subnets: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			subnets: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"main-subnet": {
 					AZ: "us-east-1a",
 				},
@@ -140,7 +140,7 @@ var _ = Describe("VPC Configuration", func() {
 			err:      true,
 		}),
 		Entry("CIDR+AZ differentiated list", subnetCase{
-			subnets: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			subnets: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"main-subnet": {
 					AZ:   "us-east-1a",
 					CIDR: ipnet.MustParseCIDR("192.168.0.0/24"),
@@ -153,7 +153,7 @@ var _ = Describe("VPC Configuration", func() {
 			az:       "us-east-1a",
 			subnetID: "subnet-1",
 			cidr:     "192.168.0.0/24",
-			expected: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			expected: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"main-subnet": {
 					AZ:   "us-east-1a",
 					ID:   "subnet-1",
@@ -165,8 +165,8 @@ var _ = Describe("VPC Configuration", func() {
 				},
 			}),
 		}),
-		Entry("ID disamiguating list", subnetCase{
-			subnets: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+		Entry("ID disambiguating list", subnetCase{
+			subnets: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"main-subnet": {
 					AZ: "us-east-1a",
 					ID: "subnet-1",
@@ -178,7 +178,7 @@ var _ = Describe("VPC Configuration", func() {
 			az:       "us-east-1a",
 			subnetID: "subnet-1",
 			cidr:     "192.168.0.0/24",
-			expected: AZSubnetMappingFromMap(map[string]AZSubnetSpec{
+			expected: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
 				"main-subnet": {
 					AZ:   "us-east-1a",
 					ID:   "subnet-1",

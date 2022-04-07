@@ -21,13 +21,13 @@ import (
 )
 
 // SetSubnets defines CIDRs for each of the subnets,
-// it must be called after SetAvailabilityZones
-func SetSubnets(vpc *api.ClusterVPC, availabilityZones []string) error {
+// it must be called after SetLocalZones & SetAvailabilityZones
+func SetSubnets(vpc *api.ClusterVPC, zones []string) error {
 	var err error
 
 	vpc.Subnets = &api.ClusterSubnets{
-		Private: api.NewAZSubnetMapping(),
-		Public:  api.NewAZSubnetMapping(),
+		Private: api.NewZoneSubnetMapping(),
+		Public:  api.NewZoneSubnetMapping(),
 	}
 	if vpc.CIDR == nil {
 		cidr := api.DefaultCIDR()
@@ -58,13 +58,13 @@ func SetSubnets(vpc *api.ClusterVPC, availabilityZones []string) error {
 		return fmt.Errorf("cannot create more than 16 subnets, %d requested", subnetsTotal)
 	}
 
-	for i, zone := range availabilityZones {
+	for i, zone := range zones {
 		public := zoneCIDRs[i]
 		private := zoneCIDRs[i+zonesTotal]
-		vpc.Subnets.Private.SetAZ(zone, api.Network{
+		vpc.Subnets.Private.SetZone(zone, api.Network{
 			CIDR: &ipnet.IPNet{IPNet: *private},
 		})
-		vpc.Subnets.Public.SetAZ(zone, api.Network{
+		vpc.Subnets.Public.SetZone(zone, api.Network{
 			CIDR: &ipnet.IPNet{IPNet: *public},
 		})
 		logger.Info("subnets for %s - public:%s private:%s", zone, public.String(), private.String())
@@ -342,7 +342,7 @@ func importSubnetsFromList(ec2API ec2iface.EC2API, spec *api.ClusterConfig, topo
 // NOTE: it does respect all fields set in spec.VPC, and will error if
 // there is a mismatch of local vs remote states
 func importSubnetsForTopology(ec2API ec2iface.EC2API, spec *api.ClusterConfig, topology api.SubnetTopology) error {
-	var subnetMapping api.AZSubnetMapping
+	var subnetMapping api.ZoneSubnetMapping
 	if spec.VPC.Subnets != nil {
 		switch topology {
 		case api.SubnetTopologyPrivate:
@@ -356,9 +356,9 @@ func importSubnetsForTopology(ec2API ec2iface.EC2API, spec *api.ClusterConfig, t
 
 	subnetIDs := subnetMapping.WithIDs()
 	cidrs := subnetMapping.WithCIDRs()
-	azs := subnetMapping.WithAZs()
+	zones := subnetMapping.WithZones()
 
-	subnets, err := describeSubnets(ec2API, spec.VPC.ID, subnetIDs, cidrs, azs)
+	subnets, err := describeSubnets(ec2API, spec.VPC.ID, subnetIDs, cidrs, zones)
 	if err != nil {
 		return err
 	}
@@ -554,7 +554,7 @@ func getSubnetByID(id string, ec2API ec2iface.EC2API) (*ec2.Subnet, error) {
 	return output.Subnets[0], nil
 }
 
-func SelectNodeGroupSubnets(nodegroupAZs, nodegroupSubnets []string, subnets api.AZSubnetMapping, ec2API ec2iface.EC2API, vpcID string) ([]string, error) {
+func SelectNodeGroupSubnets(nodegroupAZs, nodegroupSubnets []string, subnets api.ZoneSubnetMapping, ec2API ec2iface.EC2API, vpcID string) ([]string, error) {
 	// We have validated that either azs are provided or subnets are provided
 	numNodeGroupsAZs := len(nodegroupAZs)
 	numNodeGroupsSubnets := len(nodegroupSubnets)

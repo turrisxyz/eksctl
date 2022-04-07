@@ -170,7 +170,7 @@ func (v *IPv4VPCResourceSet) RenderJSON() ([]byte, error) {
 	return v.rs.renderJSON()
 }
 
-func (v *IPv4VPCResourceSet) addSubnets(refRT *gfnt.Value, topology api.SubnetTopology, subnets map[string]api.AZSubnetSpec) []SubnetResource {
+func (v *IPv4VPCResourceSet) addSubnets(refRT *gfnt.Value, topology api.SubnetTopology, subnets map[string]api.ZoneSubnetSpec) []SubnetResource {
 	var subnetIndexForIPv6 int
 	if api.IsEnabled(v.clusterConfig.VPC.AutoAllocateIPv6) {
 		// this is same kind of indexing we have in vpc.SetSubnets

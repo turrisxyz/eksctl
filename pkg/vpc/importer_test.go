@@ -20,7 +20,7 @@ var _ = Describe("SpecConfigImporter", func() {
 		},
 		SecurityGroup: "sg-111111111",
 		Subnets: &api.ClusterSubnets{
-			Private: map[string]api.AZSubnetSpec{
+			Private: map[string]api.ZoneSubnetSpec{
 				"us-west-2a": {
 					ID:   "subnet-1111111",
 					AZ:   "us-west-2a",
@@ -32,7 +32,7 @@ var _ = Describe("SpecConfigImporter", func() {
 					CIDR: &ipnet.IPNet{},
 				},
 			},
-			Public: map[string]api.AZSubnetSpec{
+			Public: map[string]api.ZoneSubnetSpec{
 				"us-west-2a": {
 					ID:   "subnet-3333333",
 					AZ:   "us-west-2a",

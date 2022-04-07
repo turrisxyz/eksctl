@@ -27,47 +27,48 @@ const (
 	ClusterNATDefault = ClusterSingleNAT
 )
 
-// AZSubnetMapping holds subnet to AZ mappings.
-// If the key is an AZ, that also becomes the name of the subnet
+// ZoneSubnetMapping holds subnet to zone mappings e.g. Availability Zone(s) or Local Zone(s).
+// If the key is an AZ or Local Zone, that also becomes the name of the subnet
 // otherwise use the key to refer to this subnet.
-// Schema type is `map[string]AZSubnetSpec`
-type AZSubnetMapping map[string]AZSubnetSpec
+// Schema type is `map[string]ZoneSubnetSpec`
+type ZoneSubnetMapping map[string]ZoneSubnetSpec
 
-func NewAZSubnetMapping() AZSubnetMapping {
-	return AZSubnetMapping(make(map[string]AZSubnetSpec))
+func NewZoneSubnetMapping() ZoneSubnetMapping {
+	return ZoneSubnetMapping(make(map[string]ZoneSubnetSpec))
 }
 
-func AZSubnetMappingFromMap(m map[string]AZSubnetSpec) AZSubnetMapping {
-	for k := range m {
-		v := m[k]
-		if v.AZ == "" {
-			v.AZ = k
-			m[k] = v
+func ZoneSubnetMappingFromMap(m map[string]ZoneSubnetSpec) ZoneSubnetMapping {
+	for zone := range m {
+		subnetMapping := m[zone]
+		if subnetMapping.AZ == "" && subnetMapping.Zone == "" {
+			subnetMapping.AZ = zone
+			m[zone] = subnetMapping
 		}
 	}
-	return AZSubnetMapping(m)
+	return ZoneSubnetMapping(m)
 }
 
-func (m *AZSubnetMapping) Set(name string, spec AZSubnetSpec) {
+func (m *ZoneSubnetMapping) Set(zone string, spec ZoneSubnetSpec) {
 	if m == nil {
-		m = &AZSubnetMapping{}
+		m = &ZoneSubnetMapping{}
 	}
-	(*m)[name] = spec
+	(*m)[zone] = spec
 }
 
-func (m *AZSubnetMapping) SetAZ(az string, spec Network) {
+// TODO nm
+func (m *ZoneSubnetMapping) SetZone(zone string, spec Network) {
 	if m == nil {
-		m = &AZSubnetMapping{}
+		m = &ZoneSubnetMapping{}
 	}
-	(*m)[az] = AZSubnetSpec{
+	(*m)[zone] = ZoneSubnetSpec{
 		ID:   spec.ID,
-		AZ:   az,
+		AZ:   zone,
 		CIDR: spec.CIDR,
 	}
 }
 
 // WithIDs returns list of subnet ids
-func (m *AZSubnetMapping) WithIDs() []string {
+func (m *ZoneSubnetMapping) WithIDs() []string {
 	if m == nil {
 		return nil
 	}
@@ -81,7 +82,7 @@ func (m *AZSubnetMapping) WithIDs() []string {
 }
 
 // WithCIDRs returns list of subnet CIDRs
-func (m *AZSubnetMapping) WithCIDRs() []string {
+func (m *ZoneSubnetMapping) WithCIDRs() []string {
 	if m == nil {
 		return nil
 	}
@@ -94,29 +95,34 @@ func (m *AZSubnetMapping) WithCIDRs() []string {
 	return subnets
 }
 
-// WithAZs returns list of subnet AZs
-func (m *AZSubnetMapping) WithAZs() []string {
+// WithZones returns list of subnet zones e.g. AZs, Local Zones
+func (m *ZoneSubnetMapping) WithZones() []string {
 	if m == nil {
 		return nil
 	}
 	subnets := []string{}
 	for _, s := range *m {
-		if s.AZ != "" && s.CIDR == nil && s.ID == "" {
-			subnets = append(subnets, s.AZ)
+		if s.CIDR == nil && s.ID == "" {
+			switch {
+			case s.AZ != "":
+				subnets = append(subnets, s.AZ)
+			case s.Zone != "":
+				subnets = append(subnets, s.Zone)
+			}
 		}
 	}
 	return subnets
 }
 
 // UnmarshalJSON parses JSON data into a value
-func (m *AZSubnetMapping) UnmarshalJSON(b []byte) error {
+func (m *ZoneSubnetMapping) UnmarshalJSON(b []byte) error {
 	// TODO we need to validate that the AZ property is maintained
-	var raw map[string]AZSubnetSpec
+	var raw map[string]ZoneSubnetSpec
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
 
-	*m = AZSubnetMappingFromMap(raw)
+	*m = ZoneSubnetMappingFromMap(raw)
 	return nil
 }
 
@@ -168,12 +174,12 @@ type (
 	}
 	// ClusterSubnets holds private and public subnets
 	ClusterSubnets struct {
-		Private AZSubnetMapping `json:"private,omitempty"`
-		Public  AZSubnetMapping `json:"public,omitempty"`
+		Private ZoneSubnetMapping `json:"private,omitempty"`
+		Public  ZoneSubnetMapping `json:"public,omitempty"`
 	}
 	// SubnetTopology can be SubnetTopologyPrivate or SubnetTopologyPublic
 	SubnetTopology string
-	AZSubnetSpec   struct {
+	ZoneSubnetSpec struct {
 		// +optional
 		ID string `json:"id,omitempty"`
 		// AZ can be omitted if the key is an AZ
@@ -243,12 +249,12 @@ func DefaultCIDR() ipnet.IPNet {
 func (c *ClusterConfig) ImportSubnet(topology SubnetTopology, az, subnetID, cidr string) error {
 	if c.VPC.Subnets == nil {
 		c.VPC.Subnets = &ClusterSubnets{
-			Private: NewAZSubnetMapping(),
-			Public:  NewAZSubnetMapping(),
+			Private: NewZoneSubnetMapping(),
+			Public:  NewZoneSubnetMapping(),
 		}
 	}
 
-	var subnetMapping AZSubnetMapping
+	var subnetMapping ZoneSubnetMapping
 	switch topology {
 	case SubnetTopologyPrivate:
 		subnetMapping = c.VPC.Subnets.Private
@@ -271,7 +277,7 @@ func (c *ClusterConfig) ImportSubnet(topology SubnetTopology, az, subnetID, cidr
 //    OR AZ, optionally with CIDR
 // If a user specifies a subnet by AZ without CIDR and ID but multiple subnets
 // exist in this VPC, one will be arbitrarily chosen
-func doImportSubnet(subnets AZSubnetMapping, az, subnetID, cidr string) error {
+func doImportSubnet(subnets ZoneSubnetMapping, az, subnetID, cidr string) error {
 	subnetCIDR, _ := ipnet.ParseCIDR(cidr)
 
 	if subnets == nil {
@@ -279,7 +285,7 @@ func doImportSubnet(subnets AZSubnetMapping, az, subnetID, cidr string) error {
 	}
 
 	if network, ok := subnets[az]; !ok {
-		newS := AZSubnetSpec{ID: subnetID, AZ: az, CIDR: subnetCIDR}
+		newS := ZoneSubnetSpec{ID: subnetID, AZ: az, CIDR: subnetCIDR}
 		// Used if we find an exact ID match
 		var idKey string
 		// Used if we match to AZ/CIDR

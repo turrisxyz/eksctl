@@ -22,7 +22,7 @@ var _ = Describe("CreateTasks", func() {
 		})
 
 		It("sets AssignIpv6AddressOnCreation to true for all public subnets", func() {
-			clusterConfig.VPC.Subnets.Public = map[string]api.AZSubnetSpec{
+			clusterConfig.VPC.Subnets.Public = map[string]api.ZoneSubnetSpec{
 				"0": {ID: subnetIDs[0]},
 				"1": {ID: subnetIDs[1]},
 			}
@@ -52,7 +52,7 @@ var _ = Describe("CreateTasks", func() {
 
 		When("the API call errors", func() {
 			It("errors", func() {
-				clusterConfig.VPC.Subnets.Public = map[string]api.AZSubnetSpec{
+				clusterConfig.VPC.Subnets.Public = map[string]api.ZoneSubnetSpec{
 					"0": {ID: subnetIDs[0]},
 				}
 				p := mockprovider.NewMockProvider()

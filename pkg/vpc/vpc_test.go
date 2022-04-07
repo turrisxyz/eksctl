@@ -26,9 +26,9 @@ import (
 )
 
 type setSubnetsCase struct {
-	vpc               *api.ClusterVPC
-	availabilityZones []string
-	error             error
+	vpc   *api.ClusterVPC
+	zones []string
+	error error
 }
 
 type importVPCCase struct {
@@ -77,7 +77,7 @@ type cleanupSubnetsCase struct {
 type selectSubnetsCase struct {
 	nodegroupAZs     []string
 	nodegroupSubnets []string
-	subnets          api.AZSubnetMapping
+	subnets          api.ZoneSubnetMapping
 	expectIDs        []string
 }
 
@@ -158,7 +158,7 @@ var _ = Describe("VPC", func() {
 
 	DescribeTable("Set subnets",
 		func(subnetsCase setSubnetsCase) {
-			err := SetSubnets(subnetsCase.vpc, subnetsCase.availabilityZones)
+			err := SetSubnets(subnetsCase.vpc, subnetsCase.zones)
 			if subnetsCase.error != nil {
 				Expect(err).To(MatchError(subnetsCase.error.Error()))
 			} else {
@@ -202,18 +202,18 @@ var _ = Describe("VPC", func() {
 			error: fmt.Errorf("Unexpected IP address type: <nil>"),
 		}),
 		Entry("VPC with valid number of subnets", setSubnetsCase{
-			vpc:               api.NewClusterVPC(false),
-			availabilityZones: []string{"1", "2", "3", "4", "5", "6", "7", "8"},
-			error:             nil,
+			vpc:   api.NewClusterVPC(false),
+			zones: []string{"1", "2", "3", "4", "5", "6", "7", "8"},
+			error: nil,
 		}),
 		Entry("VPC with invalid number of subnets", setSubnetsCase{
-			vpc:               api.NewClusterVPC(false),
-			availabilityZones: []string{"1", "2", "3", "4", "5", "6", "7", "8", "9"}, // more AZ than required
-			error:             fmt.Errorf("cannot create more than 16 subnets, 18 requested"),
+			vpc:   api.NewClusterVPC(false),
+			zones: []string{"1", "2", "3", "4", "5", "6", "7", "8", "9"}, // more AZ than required
+			error: fmt.Errorf("cannot create more than 16 subnets, 18 requested"),
 		}),
 		Entry("VPC with multiple AZs", setSubnetsCase{
-			vpc:               api.NewClusterVPC(false),
-			availabilityZones: []string{"1", "2", "3"},
+			vpc:   api.NewClusterVPC(false),
+			zones: []string{"1", "2", "3"},
 		}),
 	)
 
@@ -495,7 +495,7 @@ var _ = Describe("VPC", func() {
 	cfgWithAllAZ := &api.ClusterConfig{
 		VPC: &api.ClusterVPC{
 			Subnets: &api.ClusterSubnets{
-				Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+				Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 					"az1": {
 						ID: "private1",
 					},
@@ -506,7 +506,7 @@ var _ = Describe("VPC", func() {
 						ID: "private3",
 					},
 				}),
-				Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+				Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 					"az1": {
 						ID: "public1",
 					},
@@ -532,7 +532,7 @@ var _ = Describe("VPC", func() {
 			cfg: &api.ClusterConfig{
 				VPC: &api.ClusterVPC{
 					Subnets: &api.ClusterSubnets{
-						Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"az1": {
 								ID: "private1",
 							},
@@ -543,7 +543,7 @@ var _ = Describe("VPC", func() {
 								ID: "private3",
 							},
 						}),
-						Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"az1": {
 								ID: "public1",
 							},
@@ -564,7 +564,7 @@ var _ = Describe("VPC", func() {
 			cfg: &api.ClusterConfig{
 				VPC: &api.ClusterVPC{
 					Subnets: &api.ClusterSubnets{
-						Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"az1": {
 								ID: "private1",
 							},
@@ -578,7 +578,7 @@ var _ = Describe("VPC", func() {
 								ID: "invalid private id",
 							},
 						}),
-						Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"az1": {
 								ID: "public1",
 							},
@@ -599,7 +599,7 @@ var _ = Describe("VPC", func() {
 			cfg: &api.ClusterConfig{
 				VPC: &api.ClusterVPC{
 					Subnets: &api.ClusterSubnets{
-						Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"az1": {
 								ID: "private1",
 							},
@@ -610,7 +610,7 @@ var _ = Describe("VPC", func() {
 								ID: "private3",
 							},
 						}),
-						Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"az1": {
 								ID: "public1",
 							},
@@ -721,12 +721,12 @@ var _ = Describe("VPC", func() {
 						ID: "vpc1",
 					},
 					Subnets: &api.ClusterSubnets{
-						Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"az1": {
 								ID: "private1",
 							},
 						}),
-						Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"az1": {
 								ID: "public1",
 							},
@@ -735,14 +735,14 @@ var _ = Describe("VPC", func() {
 				},
 			},
 			expected: api.ClusterSubnets{
-				Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+				Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 					"az1": {
 						ID:   "private1",
 						AZ:   "az1",
 						CIDR: ipnet.MustParseCIDR("192.168.0.0/20"),
 					},
 				}),
-				Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+				Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 					"az1": {
 						ID:   "public1",
 						AZ:   "az1",
@@ -760,12 +760,12 @@ var _ = Describe("VPC", func() {
 						ID: "vpc1",
 					},
 					Subnets: &api.ClusterSubnets{
-						Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"invalidAZ": {
 								ID: "private1",
 							},
 						}),
-						Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"az1": {
 								ID: "public1",
 							},
@@ -774,14 +774,14 @@ var _ = Describe("VPC", func() {
 				},
 			},
 			expected: api.ClusterSubnets{
-				Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+				Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 					"invalidAZ": {
 						ID:   "private1",
 						AZ:   "az1",
 						CIDR: ipnet.MustParseCIDR("192.168.0.0/20"),
 					},
 				}),
-				Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+				Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 					"az1": {
 						ID:   "public1",
 						AZ:   "az1",
@@ -798,12 +798,12 @@ var _ = Describe("VPC", func() {
 						ID: "vpc1",
 					},
 					Subnets: &api.ClusterSubnets{
-						Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"az1": {
 								ID: "private1",
 							},
 						}),
-						Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"invalidAZ": {
 								ID: "public1",
 							},
@@ -812,14 +812,14 @@ var _ = Describe("VPC", func() {
 				},
 			},
 			expected: api.ClusterSubnets{
-				Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+				Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 					"az1": {
 						ID:   "private1",
 						AZ:   "az1",
 						CIDR: ipnet.MustParseCIDR("192.168.0.0/20"),
 					},
 				}),
-				Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+				Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 					"invalidAZ": {
 						ID:   "public1",
 						AZ:   "az1",
@@ -836,7 +836,7 @@ var _ = Describe("VPC", func() {
 						ID: "vpc1",
 					},
 					Subnets: &api.ClusterSubnets{
-						Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"subone": {
 								ID: "private1",
 							},
@@ -852,7 +852,7 @@ var _ = Describe("VPC", func() {
 				},
 			},
 			expected: api.ClusterSubnets{
-				Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+				Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 					"subone": {
 						ID:   "private1",
 						AZ:   "az1",
@@ -879,7 +879,7 @@ var _ = Describe("VPC", func() {
 						ID: "vpc1",
 					},
 					Subnets: &api.ClusterSubnets{
-						Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"az1": {
 								ID: "private1",
 							},
@@ -887,7 +887,7 @@ var _ = Describe("VPC", func() {
 								CIDR: ipnet.MustParseCIDR("192.168.64.0/18"),
 							},
 						}),
-						Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+						Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 							"invalidAZ": {
 								ID: "public1",
 							},
@@ -896,7 +896,7 @@ var _ = Describe("VPC", func() {
 				},
 			},
 			expected: api.ClusterSubnets{
-				Private: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+				Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 					"az1": {
 						ID:   "private1",
 						AZ:   "az1",
@@ -908,7 +908,7 @@ var _ = Describe("VPC", func() {
 						CIDR: ipnet.MustParseCIDR("192.168.64.0/18"),
 					},
 				}),
-				Public: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+				Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 					"invalidAZ": {
 						ID:   "public1",
 						AZ:   "az1",
@@ -928,7 +928,7 @@ var _ = Describe("VPC", func() {
 		},
 		Entry("one subnet", selectSubnetsCase{
 			nodegroupSubnets: []string{"a"},
-			subnets: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+			subnets: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 				"a": {
 					ID: "id-1",
 					AZ: "us-east-1a",
@@ -938,7 +938,7 @@ var _ = Describe("VPC", func() {
 		}),
 		Entry("one subnet by id", selectSubnetsCase{
 			nodegroupSubnets: []string{"id-1"},
-			subnets: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+			subnets: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 				"a": {
 					ID: "id-1",
 					AZ: "us-east-1a",
@@ -948,7 +948,7 @@ var _ = Describe("VPC", func() {
 		}),
 		Entry("one AZ", selectSubnetsCase{
 			nodegroupAZs: []string{"us-east-1a"},
-			subnets: api.AZSubnetMappingFromMap(map[string]api.AZSubnetSpec{
+			subnets: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
 				"a": {
 					ID: "id-1",
 					AZ: "us-east-1a",
@@ -968,14 +968,14 @@ var _ = Describe("VPC", func() {
 			mockEC2  *mocks.EC2API
 			vpcID    string
 			az       string
-			azMap    map[string]api.AZSubnetSpec
+			azMap    map[string]api.ZoneSubnetSpec
 		)
 		BeforeEach(func() {
 			subnetID = "user-defined-id"
 			vpcID = "vpc-id"
 			mockEC2 = &mocks.EC2API{}
 			az = "us-east-1a"
-			azMap = map[string]api.AZSubnetSpec{
+			azMap = map[string]api.ZoneSubnetSpec{
 				"a": {
 					ID: "id-1",
 					AZ: az,
@@ -998,7 +998,7 @@ var _ = Describe("VPC", func() {
 						},
 					},
 				}, nil)
-				ids, err := SelectNodeGroupSubnets([]string{az}, []string{subnetID}, api.AZSubnetMappingFromMap(azMap), mockEC2, vpcID)
+				ids, err := SelectNodeGroupSubnets([]string{az}, []string{subnetID}, api.ZoneSubnetMappingFromMap(azMap), mockEC2, vpcID)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(ids).To(ConsistOf("id-1", "id-2", subnetID))
 			})
@@ -1009,7 +1009,7 @@ var _ = Describe("VPC", func() {
 				mockEC2.On("DescribeSubnets", &ec2.DescribeSubnetsInput{
 					SubnetIds: aws.StringSlice([]string{subnetID}),
 				}).Return(nil, errors.New("nope"))
-				_, err := SelectNodeGroupSubnets([]string{az}, []string{subnetID}, api.AZSubnetMappingFromMap(azMap), mockEC2, vpcID)
+				_, err := SelectNodeGroupSubnets([]string{az}, []string{subnetID}, api.ZoneSubnetMappingFromMap(azMap), mockEC2, vpcID)
 				Expect(err).To(MatchError(ContainSubstring("nope")))
 			})
 		})

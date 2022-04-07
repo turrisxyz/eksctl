@@ -128,7 +128,7 @@ func (v *ExistingVPCResourceSet) importExistingResources() error {
 	return nil
 }
 
-func makeSubnetResources(subnets map[string]api.AZSubnetSpec, subnetRoutes map[string]string) ([]SubnetResource, error) {
+func makeSubnetResources(subnets map[string]api.ZoneSubnetSpec, subnetRoutes map[string]string) ([]SubnetResource, error) {
 	var subnetResources []SubnetResource
 	for _, network := range subnets {
 		az := network.AZ
@@ -150,7 +150,7 @@ func makeSubnetResources(subnets map[string]api.AZSubnetSpec, subnetRoutes map[s
 	return subnetResources, nil
 }
 
-func importRouteTables(ec2API ec2iface.EC2API, subnets map[string]api.AZSubnetSpec) (map[string]string, error) {
+func importRouteTables(ec2API ec2iface.EC2API, subnets map[string]api.ZoneSubnetSpec) (map[string]string, error) {
 	var subnetIDs []string
 	for _, subnet := range subnets {
 		subnetIDs = append(subnetIDs, subnet.ID)
