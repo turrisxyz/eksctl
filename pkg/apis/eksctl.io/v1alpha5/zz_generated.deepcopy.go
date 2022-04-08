@@ -182,6 +182,11 @@ func (in *ClusterConfig) DeepCopyInto(out *ClusterConfig) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.LocalZones != nil {
+		in, out := &in.LocalZones, &out.LocalZones
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.CloudWatch != nil {
 		in, out := &in.CloudWatch, &out.CloudWatch
 		*out = new(ClusterCloudWatch)

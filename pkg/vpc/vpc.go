@@ -507,15 +507,27 @@ func UseEndpointAccessFromCluster(provider api.ClusterProvider, spec *api.Cluste
 
 // cleanupSubnets clean up subnet entries having invalid AZ
 func cleanupSubnets(spec *api.ClusterConfig) {
-	availabilityZones := make(map[string]struct{})
-	for _, az := range spec.AvailabilityZones {
-		availabilityZones[az] = struct{}{}
+	givenZones := append(spec.AvailabilityZones, spec.LocalZones...)
+	zoneMap := make(map[string]struct{})
+	for _, zone := range givenZones {
+		zoneMap[zone] = struct{}{}
 	}
 
-	cleanup := func(subnets *api.AZSubnetMapping) {
+	cleanup := func(subnets *api.ZoneSubnetMapping) {
 		for name, subnet := range *subnets {
-			if _, ok := availabilityZones[subnet.AZ]; !ok {
-				delete(*subnets, name)
+			switch {
+			case subnet.AZ != "":
+				if _, ok := zoneMap[subnet.AZ]; !ok {
+					delete(*subnets, name)
+				}
+			case subnet.LocalZone != "":
+				if _, ok := zoneMap[subnet.LocalZone]; !ok {
+					delete(*subnets, name)
+				}
+			default:
+				if _, ok := zoneMap[name]; !ok {
+					delete(*subnets, name)
+				}
 			}
 		}
 	}

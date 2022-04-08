@@ -2101,8 +2101,8 @@
       "properties": {
         "az": {
           "type": "string",
-          "description": "can be omitted if the key is an AZ or Local Zone",
-          "x-intellij-html-description": "can be omitted if the key is an AZ or Local Zone"
+          "description": "can be omitted if the key is an AZ",
+          "x-intellij-html-description": "can be omitted if the key is an AZ"
         },
         "cidr": {
           "$ref": "#/definitions/github.com|weaveworks|eksctl|pkg|utils|ipnet.IPNet"
@@ -2112,8 +2112,8 @@
         },
         "zone": {
           "type": "string",
-          "description": "can be omitted if the key is an AZ or Local Zone",
-          "x-intellij-html-description": "can be omitted if the key is an AZ or Local Zone"
+          "description": "can be omitted if the key is a Local Zone",
+          "x-intellij-html-description": "can be omitted if the key is a Local Zone"
         }
       },
       "preferredOrder": [

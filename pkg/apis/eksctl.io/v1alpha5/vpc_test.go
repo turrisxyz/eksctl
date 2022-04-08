@@ -189,6 +189,23 @@ var _ = Describe("VPC Configuration", func() {
 				},
 			}),
 		}),
+		Entry("List with subnet with Local Zone", subnetCase{
+			subnets: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
+				"local-zone-subnet": {
+					LocalZone: "us-east-1a-zone-1",
+				},
+			}),
+			az:       "us-east-1a-zone-1",
+			subnetID: "subnet-1",
+			cidr:     "192.168.0.0/24",
+			expected: ZoneSubnetMappingFromMap(map[string]ZoneSubnetSpec{
+				"local-zone-subnet": {
+					AZ:   "us-east-1a-zone-1",
+					ID:   "subnet-1",
+					CIDR: ipnet.MustParseCIDR("192.168.0.0/24"),
+				},
+			}),
+		}),
 	)
 	DescribeTable("Can determine if VPC config in config file has cluster endpoints",
 		func(e endpointAccessCase) {

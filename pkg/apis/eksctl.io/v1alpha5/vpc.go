@@ -40,7 +40,7 @@ func NewZoneSubnetMapping() ZoneSubnetMapping {
 func ZoneSubnetMappingFromMap(m map[string]ZoneSubnetSpec) ZoneSubnetMapping {
 	for zone := range m {
 		subnetMapping := m[zone]
-		if subnetMapping.AZ == "" && subnetMapping.Zone == "" {
+		if subnetMapping.AZ == "" && subnetMapping.LocalZone == "" {
 			subnetMapping.AZ = zone
 			m[zone] = subnetMapping
 		}
@@ -106,8 +106,8 @@ func (m *ZoneSubnetMapping) WithZones() []string {
 			switch {
 			case s.AZ != "":
 				subnets = append(subnets, s.AZ)
-			case s.Zone != "":
-				subnets = append(subnets, s.Zone)
+			case s.LocalZone != "":
+				subnets = append(subnets, s.LocalZone)
 			}
 		}
 	}
@@ -185,6 +185,9 @@ type (
 		// AZ can be omitted if the key is an AZ
 		// +optional
 		AZ string `json:"az,omitempty"`
+		// LocalZone can be omitted if the key is a Local Zone
+		// +optional
+		LocalZone string `json:"zone,omitempty"`
 		// +optional
 		CIDR *ipnet.IPNet `json:"cidr,omitempty"`
 	}
@@ -277,22 +280,22 @@ func (c *ClusterConfig) ImportSubnet(topology SubnetTopology, az, subnetID, cidr
 //    OR AZ, optionally with CIDR
 // If a user specifies a subnet by AZ without CIDR and ID but multiple subnets
 // exist in this VPC, one will be arbitrarily chosen
-func doImportSubnet(subnets ZoneSubnetMapping, az, subnetID, cidr string) error {
+func doImportSubnet(subnets ZoneSubnetMapping, zone, subnetID, cidr string) error {
 	subnetCIDR, _ := ipnet.ParseCIDR(cidr)
 
 	if subnets == nil {
 		return nil
 	}
 
-	if network, ok := subnets[az]; !ok {
-		newS := ZoneSubnetSpec{ID: subnetID, AZ: az, CIDR: subnetCIDR}
+	if network, ok := subnets[zone]; !ok {
+		newS := ZoneSubnetSpec{ID: subnetID, AZ: zone, CIDR: subnetCIDR}
 		// Used if we find an exact ID match
 		var idKey string
 		// Used if we match to AZ/CIDR
 		var guessKey string
 		for k, s := range subnets {
 			if s.ID == "" {
-				if s.AZ != az || (s.CIDR.String() != "" && s.CIDR.String() != subnetCIDR.String()) {
+				if (s.AZ != zone && s.LocalZone != zone) || (s.CIDR.String() != "" && s.CIDR.String() != subnetCIDR.String()) {
 					continue
 				}
 				if guessKey != "" {
@@ -314,7 +317,7 @@ func doImportSubnet(subnets ZoneSubnetMapping, az, subnetID, cidr string) error 
 		} else if guessKey != "" {
 			subnets[guessKey] = newS
 		} else {
-			subnets[az] = newS
+			subnets[zone] = newS
 		}
 	} else {
 		if network.ID == "" {
@@ -327,8 +330,8 @@ func doImportSubnet(subnets ZoneSubnetMapping, az, subnetID, cidr string) error 
 		} else if network.CIDR.String() != subnetCIDR.String() {
 			return fmt.Errorf("subnet CIDR %q is not the same as %q", network.CIDR.String(), subnetCIDR.String())
 		}
-		network.AZ = az
-		subnets[az] = network
+		network.AZ = zone
+		subnets[zone] = network
 	}
 	return nil
 }

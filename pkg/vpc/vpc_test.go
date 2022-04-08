@@ -522,115 +522,210 @@ var _ = Describe("VPC", func() {
 		AvailabilityZones: []string{"az1", "az2", "az3"},
 	}
 
-	DescribeTable("clean up the subnets details in spec if given AZ is invalid",
-		func(e cleanupSubnetsCase) {
-			cleanupSubnets(e.cfg)
-			Expect(e.cfg).To(Equal(cfgWithAllAZ))
-		},
+	Context("Cleanup Subnets", func() {
+		DescribeTable("Clean up the subnets details in spec if given AZ is invalid",
+			func(e cleanupSubnetsCase) {
+				cleanupSubnets(e.cfg)
+				Expect(e.cfg).To(Equal(cfgWithAllAZ))
+			},
 
-		Entry("All AZs are valid", cleanupSubnetsCase{
-			cfg: &api.ClusterConfig{
-				VPC: &api.ClusterVPC{
-					Subnets: &api.ClusterSubnets{
-						Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
-							"az1": {
-								ID: "private1",
-							},
-							"az2": {
-								ID: "private2",
-							},
-							"az3": {
-								ID: "private3",
-							},
-						}),
-						Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
-							"az1": {
-								ID: "public1",
-							},
-							"az2": {
-								ID: "public2",
-							},
-							"az3": {
-								ID: "public3",
-							},
-						}),
+			Entry("All AZs are valid", cleanupSubnetsCase{
+				cfg: &api.ClusterConfig{
+					VPC: &api.ClusterVPC{
+						Subnets: &api.ClusterSubnets{
+							Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
+								"az1": {
+									ID: "private1",
+								},
+								"az2": {
+									ID: "private2",
+								},
+								"az3": {
+									ID: "private3",
+								},
+							}),
+							Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
+								"az1": {
+									ID: "public1",
+								},
+								"az2": {
+									ID: "public2",
+								},
+								"az3": {
+									ID: "public3",
+								},
+							}),
+						},
 					},
+					AvailabilityZones: []string{"az1", "az2", "az3"},
 				},
-				AvailabilityZones: []string{"az1", "az2", "az3"},
-			},
-		}),
+			}),
 
-		Entry("Private subnet with invalid AZ", cleanupSubnetsCase{
-			cfg: &api.ClusterConfig{
-				VPC: &api.ClusterVPC{
-					Subnets: &api.ClusterSubnets{
-						Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
-							"az1": {
-								ID: "private1",
-							},
-							"az2": {
-								ID: "private2",
-							},
-							"az3": {
-								ID: "private3",
-							},
-							"invalid AZ": {
-								ID: "invalid private id",
-							},
-						}),
-						Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
-							"az1": {
-								ID: "public1",
-							},
-							"az2": {
-								ID: "public2",
-							},
-							"az3": {
-								ID: "public3",
-							},
-						}),
+			Entry("Private subnet with invalid AZ", cleanupSubnetsCase{
+				cfg: &api.ClusterConfig{
+					VPC: &api.ClusterVPC{
+						Subnets: &api.ClusterSubnets{
+							Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
+								"az1": {
+									ID: "private1",
+								},
+								"az2": {
+									ID: "private2",
+								},
+								"az3": {
+									ID: "private3",
+								},
+								"invalid AZ": {
+									ID: "invalid private id",
+								},
+							}),
+							Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
+								"az1": {
+									ID: "public1",
+								},
+								"az2": {
+									ID: "public2",
+								},
+								"az3": {
+									ID: "public3",
+								},
+							}),
+						},
 					},
+					AvailabilityZones: []string{"az1", "az2", "az3"},
 				},
-				AvailabilityZones: []string{"az1", "az2", "az3"},
-			},
-			want: cfgWithAllAZ,
-		}),
-		Entry("Public subnet with invalid AZ", cleanupSubnetsCase{
-			cfg: &api.ClusterConfig{
-				VPC: &api.ClusterVPC{
-					Subnets: &api.ClusterSubnets{
-						Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
-							"az1": {
-								ID: "private1",
-							},
-							"az2": {
-								ID: "private2",
-							},
-							"az3": {
-								ID: "private3",
-							},
-						}),
-						Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
-							"az1": {
-								ID: "public1",
-							},
-							"az2": {
-								ID: "public2",
-							},
-							"az3": {
-								ID: "public3",
-							},
-							"invalid AZ": {
-								ID: "invalid public id",
-							},
-						}),
+				want: cfgWithAllAZ,
+			}),
+			Entry("Public subnet with invalid AZ", cleanupSubnetsCase{
+				cfg: &api.ClusterConfig{
+					VPC: &api.ClusterVPC{
+						Subnets: &api.ClusterSubnets{
+							Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
+								"az1": {
+									ID: "private1",
+								},
+								"az2": {
+									ID: "private2",
+								},
+								"az3": {
+									ID: "private3",
+								},
+							}),
+							Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
+								"az1": {
+									ID: "public1",
+								},
+								"az2": {
+									ID: "public2",
+								},
+								"az3": {
+									ID: "public3",
+								},
+								"invalid AZ": {
+									ID: "invalid public id",
+								},
+							}),
+						},
 					},
+					AvailabilityZones: []string{"az1", "az2", "az3"},
 				},
-				AvailabilityZones: []string{"az1", "az2", "az3"},
-			},
-			want: cfgWithAllAZ,
-		}),
-	)
+				want: cfgWithAllAZ,
+			}),
+		)
+
+		_ = Describe("Cleanup LocalZones", func() {
+			var (
+				cfg *api.ClusterConfig
+			)
+
+			BeforeEach(func() {
+				cfg = &api.ClusterConfig{
+					VPC: &api.ClusterVPC{
+						Subnets: &api.ClusterSubnets{
+							Private: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
+								"az1": {
+									ID: "private1",
+								},
+								"az2": {
+									ID: "private2",
+								},
+								"az3": {
+									ID: "private3",
+								},
+								"localzone1": {
+									LocalZone: "localzone1",
+								},
+							}),
+							Public: api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
+								"az1": {
+									ID: "public1",
+								},
+								"az2": {
+									ID: "public2",
+								},
+								"az3": {
+									ID: "public3",
+								},
+								"localzone1": {
+									LocalZone: "localzone1",
+								},
+							}),
+						},
+					},
+					AvailabilityZones: []string{"az1", "az2", "az3"},
+					LocalZones:        []string{"localzone1"},
+				}
+			})
+
+			When("a private subnet is set with an invalid Local Zone", func() {
+				It("cleans up the subnets details in spec", func() {
+					cfg.VPC.Subnets.Private["invalidZone"] = api.ZoneSubnetSpec{
+						ID: "invalid public id",
+					}
+
+					cleanupSubnets(cfg)
+					Expect(cfg.VPC.Subnets.Private).To(Equal(api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
+						"az1": {
+							ID: "private1",
+						},
+						"az2": {
+							ID: "private2",
+						},
+						"az3": {
+							ID: "private3",
+						},
+						"localzone1": {
+							LocalZone: "localzone1",
+						},
+					})))
+				})
+			})
+
+			When("a public subnet is set with an invalid Local Zone", func() {
+				It("cleans up the subnets details in spec", func() {
+					cfg.VPC.Subnets.Public["invalidZone"] = api.ZoneSubnetSpec{
+						ID: "invalid public id",
+					}
+
+					cleanupSubnets(cfg)
+					Expect(cfg.VPC.Subnets.Public).To(Equal(api.ZoneSubnetMappingFromMap(map[string]api.ZoneSubnetSpec{
+						"az1": {
+							ID: "public1",
+						},
+						"az2": {
+							ID: "public2",
+						},
+						"az3": {
+							ID: "public3",
+						},
+						"localzone1": {
+							LocalZone: "localzone1",
+						},
+					})))
+				})
+			})
+		})
+	})
 
 	DescribeTable("Can import all subnets",
 		func(e importAllSubnetsCase) {
@@ -1026,9 +1121,85 @@ var _ = Describe("VPC", func() {
 						},
 					},
 				}, nil)
-				_, err := SelectNodeGroupSubnets([]string{az}, []string{subnetID}, api.AZSubnetMappingFromMap(azMap), mockEC2, vpcID)
+				_, err := SelectNodeGroupSubnets([]string{az}, []string{subnetID}, api.ZoneSubnetMappingFromMap(azMap), mockEC2, vpcID)
 				Expect(err).To(MatchError(ContainSubstring("subnet with id \"user-defined-id\" is not in the attached vpc with id \"vpc-id\"")))
 			})
 		})
 	})
+
+	Describe("WithZones", func() {
+		When("the zone is an AZ", func() {
+			It("returns the AZ of a subnet map", func() {
+				var subnetMapping api.ZoneSubnetMapping
+				az := "us-west-1"
+				subnetMapping = api.ZoneSubnetMapping{
+					"availability-zone": {
+						AZ: az,
+					},
+				}
+				zones := subnetMapping.WithZones()
+				Expect(zones).To(ContainElement(az))
+			})
+		})
+
+		When("the zone is a Local Zone", func() {
+			It("returns the Zone of a subnet map", func() {
+				var subnetMapping api.ZoneSubnetMapping
+				localZone := "us-west-1-lax-1"
+				subnetMapping = api.ZoneSubnetMapping{
+					"local-zone": {
+						LocalZone: localZone,
+					},
+				}
+				zones := subnetMapping.WithZones()
+				Expect(zones).To(ContainElement(localZone))
+			})
+		})
+	})
+
+	Describe("ZoneSubnetMappingFromMap", func() {
+		var (
+			inputMap  map[string]api.ZoneSubnetSpec
+			outputMap map[string]api.ZoneSubnetSpec
+			zone      string
+		)
+
+		BeforeEach(func() {
+			zone = "us-west-2"
+			inputMap = make(map[string]api.ZoneSubnetSpec)
+		})
+
+		When("an AZ has been specified", func() {
+			It("returns a map with this AZ", func() {
+				inputMap[zone] = api.ZoneSubnetSpec{
+					ID: "public1",
+					AZ: zone,
+				}
+				outputMap = api.ZoneSubnetMappingFromMap(inputMap)
+				Expect(outputMap[zone].AZ).To(Equal(zone))
+			})
+		})
+
+		When("a zone has been specified", func() {
+			It("returns a map with this AZ", func() {
+				inputMap[zone] = api.ZoneSubnetSpec{
+					ID:        "public1",
+					LocalZone: zone,
+				}
+				outputMap = api.ZoneSubnetMappingFromMap(inputMap)
+				Expect(outputMap[zone].LocalZone).To(Equal(zone))
+			})
+		})
+
+		When("only the ID was specified", func() {
+			It("returns a map with this ID", func() {
+				inputMap[zone] = api.ZoneSubnetSpec{
+					ID: "public1",
+				}
+				outputMap = api.ZoneSubnetMappingFromMap(inputMap)
+				Expect(outputMap[zone].AZ).To(Equal(zone))
+			})
+		})
+	})
+
 })
